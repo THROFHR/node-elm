@@ -11,7 +11,7 @@
     "check": "cross-env NODE_ENV=production nodemon --harmony index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "pm2 deploy production",
-    "start": "node index.js"
+    "start": "nodemon --harmony index.js"
   },
   "repository": {
     "type": "git",
@@ -49,7 +49,8 @@
     "sha1": "^1.1.1",
     "time-formater": "1.0.1",
     "time-stamp": "^2.0.0",
-    "winston": "^2.3.1"
+    "winston": "^2.3.1",
+    "nodemon": "^1.18.6"
   },
   "devDependencies": {
     "babel-plugin-transform-async-to-generator": "^6.24.1",
