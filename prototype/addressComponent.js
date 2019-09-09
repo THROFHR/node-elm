@@ -24,7 +24,7 @@ class AddressComponent extends BaseComponent {
 	 			ip = defaultIp;
 	 		} else {
 	 			try {
-					ip = req.headers['x-forwarded-for'] || 
+					ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || 
 			 		req.connection.remoteAddress || 
 			 		req.socket.remoteAddress ||
 			 		req.connection.socket.remoteAddress;
