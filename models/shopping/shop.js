@@ -1,6 +1,7 @@
 'use strict';
 
 import mongoose from 'mongoose'
+import shopData from '../../InitData/shop'
 
 const shopSchema = new mongoose.Schema({
 	activities: [{
@@ -76,4 +77,13 @@ shopSchema.index({ id: 1 }); //primary_key 主键
 
 const Shop = mongoose.model('Shop', shopSchema);
 
+
+Shop.findOne((err, data) => {
+	if (!data) {
+		shopData.forEach(item => {
+			console.log('item=====',item);
+			Shop.create(item);
+		})
+	}
+})
 export default Shop

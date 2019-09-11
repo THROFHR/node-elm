@@ -70,9 +70,7 @@ router(app);
 
 app.use(history());
 app.use(express.static('./public'));
-app.use('/',(req, res, next) => {
-	res.redirect("/elm/index.html")
-});
+
 app.listen(config.port, () => {
 	console.log(
 		chalk.green(`成功监听端口：${config.port}`)

@@ -66,7 +66,16 @@ rateSchema.statics.initData = async function (restaurant_id){
 
 rateSchema.statics.getData = async function (restaurant_id, type){
 	try{
-		const data = await this.findOne({restaurant_id}, '-_id');
+		let data = await this.findOne({restaurant_id}, '-_id');
+		if (!data) {
+			const newRating = {
+				restaurant_id,
+				ratings: ratingList,
+				scores,
+				tags,
+			}
+			data = await this.create(newRating);
+		}
 		if (!data) {
 			throw new Error('未找到当前餐馆的评论数据');
 		}else{

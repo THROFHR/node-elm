@@ -1,5 +1,8 @@
 'use strict';
 
+import fooMeunData from '../../InitData/foot_meun'
+import fooData from '../../InitData/foot'
+
 import {Food as FoodModel, Menu as MenuModel} from '../../models/shopping/food'
 import ShopModel from '../../models/shopping/shop'
 import BaseComponent from '../../prototype/baseComponent'
@@ -24,6 +27,7 @@ class Food extends BaseComponent{
 		}]
 		this.initData = this.initData.bind(this);
 		this.addFood = this.addFood.bind(this);
+		this.addFoodInit = this.addFoodInit.bind(this);
 		this.getCategory = this.getCategory.bind(this);
 		this.addCategory = this.addCategory.bind(this);
 		this.getSpecfoods = this.getSpecfoods.bind(this);
@@ -103,6 +107,7 @@ class Food extends BaseComponent{
 				id: category_id,
 				foods: [],
 			}
+			console.log('foodObj===',foodObj);
 			const newFood = new MenuModel(foodObj);
 			try{
 				await newFood.save();
@@ -122,6 +127,8 @@ class Food extends BaseComponent{
 	}
 	async addFood(req, res, next){
 		const form = new formidable.IncomingForm();
+		console.log("form===",form);
+		
 		form.parse(req, async (err, fields, files) => {
 			try{
 				if (!fields.name) {
@@ -250,6 +257,90 @@ class Food extends BaseComponent{
 			}
 		})
 	}
+
+	async addFoodInit(fields){
+		let category;
+			let restaurant;
+			try{
+				category = await MenuModel.findOne({id: fields.category_id});
+				restaurant = await ShopModel.findOne({id: fields.restaurant_id});
+			}catch(err){
+				console.log('获取食品类型和餐馆信息失败');
+				return
+			}
+			let item_id;
+			try{
+				item_id = await this.getId('item_id');
+			}catch(err){
+				console.log('获取item_id失败');
+				return
+			}
+			const rating_count = Math.ceil(Math.random()*1000);
+			const month_sales = Math.ceil(Math.random()*1000);
+			const tips = rating_count + "评价 月售" + month_sales + "份";
+			const newFood = {
+				name: fields.name,
+				description: fields.description,
+				image_path: fields.image_path,
+				activity: null,
+				attributes: [],
+				restaurant_id: fields.restaurant_id,
+				category_id: fields.category_id,
+				satisfy_rate: Math.ceil(Math.random()*100),
+				satisfy_count: Math.ceil(Math.random()*1000),
+				item_id,
+				rating: (4 + Math.random()).toFixed(1),
+				rating_count,
+				month_sales,
+				tips,
+				specfoods: [],
+				specifications: [],
+			}
+			if (fields.activity) {
+				newFood.activity = {
+					image_text_color: 'f1884f',
+					icon_color: 'f07373',
+					image_text: fields.activity,
+				}
+			}
+			if (fields.attributes.length) {
+				fields.attributes.forEach(item => {
+					let attr;
+					switch(item){
+						case '新': 
+							attr = {
+								icon_color: '5ec452',
+								icon_name: '新'
+							}
+							break;
+						case '招牌': 
+							attr = {
+								icon_color: 'f07373',
+								icon_name: '招牌'
+							}
+							break;
+					}
+					newFood.attributes.push(attr);
+				})
+			}
+			try{
+				const [specfoods, specifications] = await this.getSpecfoods(fields, item_id);
+				newFood.specfoods = specfoods;
+				newFood.specifications = specifications;
+			}catch(err){
+				console.log('添加specs失败', err);
+				return
+			}
+			try{
+				const foodEntity = await FoodModel.create(newFood);
+				category.foods.push(foodEntity);
+				category.markModified('foods');
+				await category.save();
+				console.log('保存食品到数据库成功');
+			}catch(err){
+				console.log('保存食品到数据库失败', err);
+			}
+	}
 	async getSpecfoods(fields, item_id){
 		let specfoods = [], specifications = [];
 		if (fields.specs.length < 2) {
@@ -326,6 +417,7 @@ class Food extends BaseComponent{
 			filter = {restaurant_id, $where: function(){return this.foods.length}};
 		}
 		try{
+			console.log('filter===',filter);
 			const menu = await MenuModel.find(filter, '-_id');
 			res.send(menu);
 		}catch(err){
@@ -497,4 +589,49 @@ class Food extends BaseComponent{
 	}
 }
 
-export default new Food()
+var FootRoute = new Food()
+
+
+
+
+var getRamdomFood = () => {
+	var arr = []
+	for (let i = 0; i < 8; i++) {
+		var n = Math.floor(Math.random() * fooData.length) 
+		arr.push(fooData[n])
+	}
+	return arr
+}
+var addMeun = async() => {
+	var shopData =await ShopModel.find()
+	for (let i = 0; i < shopData.length; i++) {
+		const element = shopData[i];
+		for (let j = 0; j < fooMeunData.length; j++) {
+			const item = fooMeunData[j];
+			item.restaurant_id = element.id
+			item.id = (i * fooMeunData.length)+ j
+			var meun = await MenuModel.create(Object.assign({},item))
+			var foods = getRamdomFood()
+			var funs = foods.map((itemfood) => {
+				return { name: itemfood.name,
+				description: itemfood.description,
+				image_path: itemfood.img,
+				activity: '',
+				attributes: [],
+				specs: [ { specs: '默认', packing_fee: 0, price: 20 } ],
+				category_id: meun.id,
+				restaurant_id: meun.restaurant_id }
+			})
+			for (let k = 0; k < funs.length; k++) {
+				const element = funs[k];
+				await FootRoute.addFoodInit(element).catch(() => {})
+			}
+		}
+	}
+}
+MenuModel.findOne((err, data) => {
+	if (!data) {
+		addMeun()
+	}
+})
+export default FootRoute

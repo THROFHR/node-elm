@@ -1,6 +1,7 @@
 'use strict';
 
-import mongoose from 'mongoose'
+import mongoose, { Promise } from 'mongoose'
+
 const Schema = mongoose.Schema;
 
 const foodSchema = new Schema({

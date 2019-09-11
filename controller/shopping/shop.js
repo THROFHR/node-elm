@@ -267,7 +267,7 @@ class Shop extends AddressComponent{
 			}
 		}
 
-		const restaurants = await ShopModel.find(filter, '-_id').sort(sortBy).limit(Number(limit)).skip(Number(offset))
+		let restaurants = await ShopModel.find(filter, '-_id').sort(sortBy).limit(Number(limit)).skip(Number(offset))
 		const from = latitude + ',' + longitude;
 		let to = '';
 		//获取百度地图测局所需经度纬度
@@ -426,7 +426,9 @@ class Shop extends AddressComponent{
 				}else{
 					newData = {name, address, description, phone, category, image_path}
 				}
-				await ShopModel.findOneAndUpdate({id}, {$set: newData});
+				console.log('newData=====',newData);
+				var resp = await ShopModel.findOneAndUpdate({id}, {$set: newData});
+				console.log('resp===',resp);
 				res.send({
 					status: 1,
 					success: '修改商铺信息成功',
